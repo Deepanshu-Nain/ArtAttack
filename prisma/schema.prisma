@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  username String
+
+  avatar Int
+
+  language String
+
+  score Int @default(0)
+
+  connected Boolean @default(true)
+
+  isHost Boolean @default(false)
+
+  isDrawing Boolean @default(false)
+
+  isReady Boolean @default(false)
+
+  roomId String? @db.ObjectId
+
+  room Room? @relation(fields:[roomId], references:[id])
+
+  createdAt DateTime @default(now())
+}
+
+model Room {
+
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  code String @unique
+
+  started Boolean @default(false)
+
+  currentRound Int @default(1)
+
+  maxRounds Int @default(3)
+
+  maxPlayers Int @default(8)
+
+  players Player[]
+
+  currentDrawerId String? @db.ObjectId
+  
+  wordChoices String[]
+  
+  currentWord String?
+  
+  roundEndsAt DateTime?
+
+  createdAt DateTime @default(now())
+}
