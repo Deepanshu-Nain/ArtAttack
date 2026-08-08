@@ -10,26 +10,58 @@ export default function StartGameButton({
   onStartGame: () => void;
 }) {
   return (
-    <>
+    <div className="flex flex-col items-center gap-2 w-full md:w-auto">
       <button
         disabled={disabled}
         onClick={onStartGame}
-        className={`font-bold py-3 px-8 rounded-full text-xl transition-all shadow-[0_4px_0_rgba(0,0,0,0.2)] w-full sm:w-auto
-          ${
-            disabled
-              ? "bg-gray-600 text-gray-400 cursor-not-allowed shadow-none translate-y-[4px]"
-              : "bg-indigo-600 hover:bg-indigo-500 text-white active:scale-95 shadow-[0_4px_0_rgb(67,56,202)]"
-          }`}
+        className={`
+          relative group w-full md:w-auto
+          ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+        `}
       >
-        Start Game
+        <div
+          className={`
+            text-[24px] leading-[1] uppercase
+            px-8 py-4
+            cardboard-btn
+            rotate-[1deg]
+            flex items-center justify-center gap-2
+            w-full
+            transition-transform duration-150
+            ${disabled ? "" : "group-hover:scale-105 group-hover:rotate-0"}
+            ${
+              disabled
+                ? "bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)]"
+                : "bg-[var(--color-primary-container)] text-[var(--color-on-surface)]"
+            }
+          `}
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          <span>Start Game</span>
+          <span
+            className="material-symbols-outlined text-[24px]"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            play_circle
+          </span>
+        </div>
       </button>
+
       {playerCount < 2 ? (
-        <p className="text-sm text-gray-400">Waiting for players to join...</p>
+        <p
+          className="text-[18px] text-[var(--color-error)] rotate-[-1deg]"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          Waiting for players to join...
+        </p>
       ) : !allPlayersReady ? (
-        <p className="text-sm text-yellow-500">
+        <p
+          className="text-[18px] text-[var(--color-secondary)] rotate-[1deg]"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
           Waiting for all players to be ready...
         </p>
       ) : null}
-    </>
+    </div>
   );
 }

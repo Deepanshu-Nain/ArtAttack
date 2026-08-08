@@ -9,8 +9,19 @@ export default function ToolBarLayout({
 }) {
   if (!isDrawer) {
     return (
-      <div className="h-16 bg-slate-800 p-2 flex gap-4 border-t border-slate-700 opacity-50 pointer-events-none items-center justify-center">
-        <div className="text-white text-xs tracking-widest font-bold">
+      <div
+        className="
+          h-16 mt-6 p-3
+          bg-[var(--color-surface-container)]
+          sketch-border
+          opacity-50 pointer-events-none
+          flex items-center justify-center
+        "
+      >
+        <div
+          className="text-[var(--color-on-surface-variant)] text-[14px] uppercase tracking-widest"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
           VIEWING MODE
         </div>
       </div>
@@ -18,7 +29,16 @@ export default function ToolBarLayout({
   }
 
   return (
-    <div className="h-20 bg-slate-800 p-2 flex flex-row items-center justify-center gap-4 border-t border-slate-700 overflow-x-auto w-full">
+    <div
+      className="
+        mt-6 p-3
+        bg-[var(--color-surface-container-low)]
+        sketch-border
+        rotate-[1deg]
+        flex flex-row items-center justify-center gap-4
+        overflow-x-auto w-full
+      "
+    >
       {children}
     </div>
   );

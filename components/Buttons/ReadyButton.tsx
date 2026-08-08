@@ -8,14 +8,36 @@ export default function ReadyButton({
   return (
     <button
       onClick={onToggleReady}
-      className={`font-bold py-3 px-8 rounded-full text-xl transition-transform hover:scale-105 active:scale-95 shadow-[0_4px_0_rgba(0,0,0,0.2)] w-full sm:w-auto
-        ${
-          isReady
-            ? "bg-gray-600 text-white hover:bg-gray-500"
-            : "bg-green-600 hover:bg-green-500 text-white shadow-[0_4px_0_rgb(21,128,61)]"
-        }`}
+      className="relative group w-full md:w-auto"
     >
-      {isReady ? "Cancel Ready" : "Ready Up!"}
+      <div
+        className={`
+          text-[24px] leading-[1] uppercase
+          px-8 py-4
+          cardboard-btn
+          rotate-[-1deg]
+          flex items-center justify-center gap-2
+          w-full
+          transition-transform duration-150
+          group-hover:scale-105 group-hover:rotate-0
+          ${
+            isReady
+              ? "bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)]"
+              : "bg-[#a3e635] text-[var(--color-on-surface)]" /* Bright green for ready up */
+          }
+        `}
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        <span>{isReady ? "Cancel Ready" : "Ready Up!"}</span>
+        {!isReady && (
+          <span
+            className="material-symbols-outlined text-[24px]"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            check_circle
+          </span>
+        )}
+      </div>
     </button>
   );
 }

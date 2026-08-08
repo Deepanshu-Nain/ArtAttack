@@ -1,5 +1,13 @@
 import { CreatePlayerDTO } from "@/types/dto";
-import { createPlayer, updatePlayer, deletePlayer as deletePlayerRepo, getPlayerById } from "@/repositories/player.repository";
+import {
+  createPlayer,
+  updatePlayer,
+  deletePlayer as deletePlayerRepo,
+  getPlayerById,
+  incrementPlayerScore,
+  getTopPlayers as getTopPlayersRepo,
+  resetScores,
+} from "@/repositories/player.repository";
 
 export async function deletePlayer(playerId: string) {
     return deletePlayerRepo(playerId);
@@ -52,12 +60,14 @@ export async function makePlayerHost(playerId: string) {
     });
 }
 
-import { incrementPlayerScore, getTopPlayers as getTopPlayersRepo } from "@/repositories/player.repository";
-
 export async function addScore(playerId: string, amount: number) {
     return incrementPlayerScore(playerId, amount);
 }
 
 export async function getTopPlayers(limit: number = 100) {
     return getTopPlayersRepo(limit);
+}
+
+export async function resetPlayerScores(playerIds: string[]) {
+    return resetScores(playerIds);
 }

@@ -1,5 +1,11 @@
 import { avatars } from "@/components/Avatar/avatars";
 
+const RANK_STYLES: Record<number, string> = {
+  0: "text-[var(--color-primary)] drop-shadow-sm rotate-[-2deg]",
+  1: "text-[var(--color-secondary)] drop-shadow-sm rotate-[1deg]",
+  2: "text-[var(--color-on-surface-variant)] drop-shadow-sm rotate-[-1deg]",
+};
+
 export default function LeaderboardRow({
   player,
   index,
@@ -9,40 +15,38 @@ export default function LeaderboardRow({
 }) {
   return (
     <div
-      className={`grid grid-cols-12 gap-4 items-center p-4 border-b border-slate-200 transition-colors hover:bg-indigo-50
-        ${index === 0 ? "bg-yellow-50" : ""}
-        ${index === 1 ? "bg-gray-100" : ""}
-        ${index === 2 ? "bg-orange-50" : ""}
+      className={`grid grid-cols-12 gap-4 items-center p-4 border-b-2 border-dashed border-[var(--color-outline-variant)] transition-colors hover:bg-[var(--color-surface-container-high)]
+        ${index === 0 ? "bg-[var(--color-primary-container)]/40" : ""}
+        ${index === 1 ? "bg-[var(--color-secondary-container)]/30" : ""}
+        ${index === 2 ? "bg-[var(--color-surface-container)]" : ""}
       `}
     >
-      <div className="col-span-2 text-center">
+      <div className="col-span-3 text-center">
         <span
-          className={`text-2xl font-black 
-          ${index === 0 ? "text-yellow-500 drop-shadow-md" : ""}
-          ${index === 1 ? "text-gray-400 drop-shadow-md" : ""}
-          ${index === 2 ? "text-orange-400 drop-shadow-md" : ""}
-          ${index > 2 ? "text-slate-400" : ""}
-        `}
+          className={`text-2xl font-black ${RANK_STYLES[index] ?? "text-[var(--color-on-surface-variant)] rotate-[0.5deg]"}`}
+          style={{ fontFamily: "var(--font-display)" }}
         >
           #{index + 1}
         </span>
       </div>
 
-      <div className="col-span-7 flex items-center gap-4">
-        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-2xl shadow-sm border-2 border-indigo-200">
+      <div className="col-span-6 flex items-center gap-4">
+        <div className="w-12 h-12 bg-[var(--color-surface-container)] rounded-full flex items-center justify-center text-2xl shadow-sm border-2 border-[var(--color-pencil)] rotate-[-2deg]">
           {avatars[player.avatar] || avatars[0]}
         </div>
         <span
-          className={`font-bold text-lg truncate ${
-            index < 3 ? "text-indigo-900" : "text-slate-700"
-          }`}
+          className="font-bold text-lg truncate text-[var(--color-on-surface)]"
+          style={{ fontFamily: "var(--font-body)" }}
         >
           {player.username}
         </span>
       </div>
 
       <div className="col-span-3 text-right pr-4">
-        <span className="font-black text-xl text-indigo-600">
+        <span
+          className="font-black text-xl text-[var(--color-secondary)]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
           {player.score.toLocaleString()}
         </span>
       </div>

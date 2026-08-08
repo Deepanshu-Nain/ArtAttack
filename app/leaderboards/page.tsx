@@ -26,11 +26,11 @@ export default async function LeaderboardsPage() {
   return (
     <LeaderboardLayout>
       {error ? (
-        <div className="p-8 text-center text-slate-500 font-bold text-xl">
+        <div className="p-8 text-center text-[var(--color-on-surface-variant)] font-bold text-xl" style={{ fontFamily: "var(--font-body)" }}>
           {error}
         </div>
       ) : topPlayers.length === 0 ? (
-        <div className="p-8 text-center text-slate-500 font-bold text-xl">
+        <div className="p-8 text-center text-[var(--color-on-surface-variant)] font-bold text-xl" style={{ fontFamily: "var(--font-body)" }}>
           No players found. Start playing to get on the board!
         </div>
       ) : (

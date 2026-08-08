@@ -6,7 +6,7 @@ import {
   updateRoom,
   deleteRoom as repoDeleteRoom,
 } from "@/repositories/room.repository";
-import { deletePlayer, makePlayerHost } from "./player.service";
+import { deletePlayer, makePlayerHost, resetPlayerScores } from "./player.service";
 import { startNextRound } from "./round.service";
 
 export async function findAvailableRoom() {
@@ -29,6 +29,12 @@ export async function getRoomInfo(code: string) {
 }
 
 export async function startGame(code: string) {
+  // Reset all player scores before starting a new match
+  const room = await repoGetRoomByCode(code);
+  if (room) {
+    await resetPlayerScores(room.players.map((p) => p.id));
+  }
+
   await updateRoom(code, { started: true });
   return startNextRound(code);
 }

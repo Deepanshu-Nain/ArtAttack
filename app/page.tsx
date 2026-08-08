@@ -2,7 +2,7 @@ import HomeCard from "@/components/HomeCard";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#1453C2] flex items-center justify-center">
+    <main className="bg-fibrous min-h-screen w-full flex items-center justify-center p-4 md:p-8">
       <HomeCard />
     </main>
   );

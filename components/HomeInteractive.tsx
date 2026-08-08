@@ -5,16 +5,13 @@ import { useRouter } from "next/navigation";
 
 import AvatarPicker from "./Avatar/AvatarPicker";
 import UsernameInput from "./Input/UsernameInput";
-import LanguageSelect from "./Input/LanguageSelect";
 import PlayButton from "./Buttons/PlayButton";
 import CreateRoomButton from "./Buttons/CreateRoomButton";
 import { joinPublicGame, joinPrivateGame } from "../lib/game";
 
 export default function HomeInteractive() {
   const [username, setUsername] = useState("");
-  const [language, setLanguage] = useState("English");
   const [avatar, setAvatar] = useState(0);
-
   const router = useRouter();
 
   const handlePlay = async () => {
@@ -22,16 +19,13 @@ export default function HomeInteractive() {
       const existingPlayerId = localStorage.getItem("playerId");
       const result = await joinPublicGame({
         username,
-        language,
+        language: "English",
         avatar,
         playerId: existingPlayerId,
       });
 
       if (result.success) {
-        // Save player info to know who we are in the lobby
         localStorage.setItem("playerId", result.player.id);
-        
-        // Navigate to the Lobby
         router.push(`/room/${result.room.code}`);
       }
     } catch (error) {
@@ -46,16 +40,13 @@ export default function HomeInteractive() {
       const existingPlayerId = localStorage.getItem("playerId");
       const result = await joinPrivateGame({
         username,
-        language,
+        language: "English",
         avatar,
         playerId: existingPlayerId,
       });
 
       if (result.success) {
-        // Save player info to know who we are in the lobby
         localStorage.setItem("playerId", result.player.id);
-
-        // Navigate to the new private room
         router.push(`/room/${result.room.code}`);
       }
     } catch (error) {
@@ -67,27 +58,39 @@ export default function HomeInteractive() {
 
   return (
     <>
-      <div className="flex gap-2">
+      {/* Header */}
+      <header className="text-center w-full relative">
+        <h1
+          className="
+            text-[64px] leading-[1.1] tracking-[-0.02em]
+            text-[var(--color-on-surface)]
+            wobbly-line
+            inline-block
+            mb-2
+            rotate-[-1deg]
+          "
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          art-attack
+        </h1>
+      </header>
+
+      {/* Interaction Area */}
+      <div className="flex flex-col items-center gap-8 w-full max-w-md relative z-10">
+        {/* Avatar Picker */}
+        <AvatarPicker avatar={avatar} setAvatar={setAvatar} />
+
+        {/* Name Input */}
         <UsernameInput
           username={username}
           setUsername={setUsername}
         />
 
-        <LanguageSelect
-          language={language}
-          setLanguage={setLanguage}
-        />
-      </div>
+        {/* Join Button (same as old Play — joins public matchmaking) */}
+        <PlayButton onPlay={handlePlay} />
 
-      <AvatarPicker
-        avatar={avatar}
-        setAvatar={setAvatar}
-      />
-
-      <PlayButton onPlay={handlePlay} />
-
-      <div className="flex w-full mt-2">
-        <CreateRoomButton onCreateRoom={handleCreateRoom}/>
+        {/* Create Private Room */}
+        <CreateRoomButton onCreateRoom={handleCreateRoom} />
       </div>
     </>
   );

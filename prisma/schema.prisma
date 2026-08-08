@@ -1,5 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client-js"
+  // Include the Linux query-engine binary so the generated client works on
+  // Vercel's serverless runtime. "native" covers whichever machine runs
+  // `prisma generate` (local dev / CI). Vercel functions run on AWS Lambda,
+  // which needs the linux target.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {

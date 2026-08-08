@@ -9,7 +9,7 @@ export default function RoomLobbyCard({
   roomCode: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-10 text-white font-sans w-full">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-10 text-[var(--color-on-surface)] w-full bg-fibrous">
       <RoomInteractive initialRoom={initialRoom} roomCode={roomCode} />
     </div>
   );

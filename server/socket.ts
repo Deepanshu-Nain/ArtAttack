@@ -1,7 +1,5 @@
-import express from "express";
-import { createServer } from "http";
+import type { Server as HTTPServer } from "http";
 import { Server } from "socket.io";
-import cors from "cors";
 
 // We can import our existing services right here!
 import { setPlayerReady, addScore } from "../services/player.service";
@@ -12,20 +10,30 @@ import { startNextRound } from "../services/round.service";
 
 const WORD_SELECTION_SECONDS = 15;
 const ROUND_SECONDS = 80;
+// How long the round-results screen stays up (the revealed word + scoreboard)
+// before auto-advancing to the next round. This is a fixed pause for everyone —
+// no player can skip it, so nobody gets ahead of the rest of the room.
+const RESULTS_SECONDS = 6;
 // How long to wait for a player to reconnect (e.g. an F5 refresh) before
 // treating their disconnection as a real leave and removing them from the room.
 const DISCONNECT_GRACE_MS = 30_000;
 
-const app = express();
-app.use(cors());
-const httpServer = createServer(app);
+// The Socket.IO instance. Assigned by attachSocketServer() below, which wires
+// it onto whatever HTTP server hosts the Next.js app, so the whole game runs
+// as a single deployable process.
+let io: Server;
 
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*", // In production, restrict this to your domain
-    methods: ["GET", "POST"],
-  },
-});
+export function attachSocketServer(httpServer: HTTPServer) {
+  io = new Server(httpServer, {
+    cors: {
+      origin: process.env.CORS_ORIGIN || "*", // In production, set CORS_ORIGIN to your app's domain
+      methods: ["GET", "POST"],
+    },
+  });
+
+  registerConnectionHandlers();
+  return io;
+}
 
 // --- TIMER STATE ---
 // IMPORTANT: these maps live at module scope, NOT inside the "connection" handler.
@@ -35,11 +43,38 @@ const activeTimers = new Map<string, NodeJS.Timeout>();
 const roomTimeLeft = new Map<string, number>();
 const roomCorrectGuessers = new Map<string, Set<string>>();
 
+// --- ROUND RESULTS STATE ---
+// Base score per player captured the moment a word was chosen. We diff against
+// this at round end to show each player's per-round "+points" on the results
+// screen (like the design's "+500 pts" rows).
+const roomBaseScores = new Map<string, Map<string, number>>();
+// One-shot timeout holding the results screen open before auto-advance.
+const resultsTimers = new Map<string, NodeJS.Timeout>();
+// Guards against double-advance when several players click "next" at once.
+const advancingRooms = new Set<string>();
+
+function stopResultsTimer(roomCode: string) {
+  const timer = resultsTimers.get(roomCode);
+  if (timer) clearTimeout(timer);
+  resultsTimers.delete(roomCode);
+}
+
 function stopTimer(roomCode: string) {
   const timer = activeTimers.get(roomCode);
   if (timer) clearInterval(timer);
   activeTimers.delete(roomCode);
   roomTimeLeft.delete(roomCode);
+}
+
+// Clean up every piece of server-side state tied to a room. Called when a room
+// is deleted (becomes empty) so abandoned rooms don't leave timers and maps
+// behind — a slow leak that would grow over many played matches.
+function cleanupRoomState(roomCode: string) {
+  stopTimer(roomCode);
+  stopResultsTimer(roomCode);
+  roomCorrectGuessers.delete(roomCode);
+  roomBaseScores.delete(roomCode);
+  advancingRooms.delete(roomCode);
 }
 
 function startTimer(roomCode: string, duration: number, onComplete: () => void) {
@@ -80,6 +115,10 @@ async function startWordSelection(roomCode: string) {
       });
 
       roomCorrectGuessers.set(roomCode, new Set());
+      roomBaseScores.set(
+        roomCode,
+        new Map(room.players.map((p) => [p.id, p.score]))
+      );
       io.to(roomCode).emit("room-updated");
 
       startTimer(roomCode, ROUND_SECONDS, () => handleRoundEnd(roomCode));
@@ -89,17 +128,80 @@ async function startWordSelection(roomCode: string) {
   });
 }
 
-// Drawing phase ended (time out or everyone guessed): advance to the next round.
-async function handleRoundEnd(roomCode: string) {
+// Whether the just-finished round is the last of the match. Mirrors the
+// round-advance logic in round.service so the results screen can say "Back to
+// Lobby" instead of "Next Round" on the final round.
+function isFinalRound(room: {
+  currentDrawerId: string | null;
+  currentRound: number;
+  maxRounds: number;
+  players: { id: string }[];
+}): boolean {
+  let nextRound = room.currentRound;
+  if (room.currentDrawerId) {
+    const currentIndex = room.players.findIndex(
+      (p) => p.id === room.currentDrawerId
+    );
+    if (currentIndex + 1 >= room.players.length) {
+      nextRound++;
+    }
+  }
+  return nextRound > room.maxRounds;
+}
+
+// Finish the round-results pause and move to the next round (or the lobby when
+// the match is over). Guarded so it only ever runs once per round.
+async function advanceAfterResults(roomCode: string) {
+  if (advancingRooms.has(roomCode)) return;
+  advancingRooms.add(roomCode);
   try {
     roomCorrectGuessers.delete(roomCode);
+    roomBaseScores.delete(roomCode);
     const room = await startNextRound(roomCode);
     io.to(roomCode).emit("room-updated");
 
-    // Game over (started:false) means we're back in the lobby — no timer needed.
+    // started:false means we're back in the lobby — no word selection needed.
     if (room.started) {
       startWordSelection(roomCode);
     }
+  } catch (err) {
+    console.error("Failed to advance after results:", err);
+  } finally {
+    advancingRooms.delete(roomCode);
+  }
+}
+
+// Drawing phase ended (time out or everyone guessed). Instead of instantly
+// advancing, reveal the word and per-round scores for RESULTS_SECONDS, then
+// auto-advance (or wait for a player to hit "Next").
+async function handleRoundEnd(roomCode: string) {
+  try {
+    const room = await getRoomByCode(roomCode);
+    stopTimer(roomCode);
+    roomCorrectGuessers.delete(roomCode);
+
+    if (!room) return;
+
+    const base = roomBaseScores.get(roomCode) ?? new Map<string, number>();
+    const players = room.players.map((p) => ({
+      id: p.id,
+      username: p.username,
+      avatar: p.avatar,
+      score: p.score,
+      delta: p.score - (base.get(p.id) ?? p.score),
+    }));
+
+    io.to(roomCode).emit("round-results", {
+      word: room.currentWord,
+      gameOver: isFinalRound(room),
+      players,
+    });
+
+    stopResultsTimer(roomCode);
+    resultsTimers.set(
+      roomCode,
+      setTimeout(() => advanceAfterResults(roomCode), RESULTS_SECONDS * 1000)
+    );
   } catch (err) {
     console.error("Failed to end round:", err);
   }
@@ -150,6 +252,11 @@ function scheduleSoftLeave(playerId: string, roomCode: string) {
       if (room?.started && !room.currentWord && room.wordChoices.length > 0) {
         startWordSelection(roomCode);
       }
+      // Room was deleted (now empty) — drop all of its timer/state so nothing
+      // keeps tick-tocking for a room that no longer exists.
+      if (!room) {
+        cleanupRoomState(roomCode);
+      }
     } catch (err) {
       console.error("Failed to handle player leave after grace period:", err);
     }
@@ -158,8 +265,9 @@ function scheduleSoftLeave(playerId: string, roomCode: string) {
   pendingLeaves.set(playerId, timer);
 }
 
-io.on("connection", (socket) => {
-  console.log("Player connected to Socket:", socket.id);
+function registerConnectionHandlers() {
+  io.on("connection", (socket) => {
+    console.log("Player connected to Socket:", socket.id);
 
   let connectedRoom: string | null = null;
   let connectedPlayer: string | null = null;
@@ -235,6 +343,10 @@ io.on("connection", (socket) => {
       });
 
       roomCorrectGuessers.set(roomCode, new Set());
+      roomBaseScores.set(
+        roomCode,
+        new Map(room.players.map((p) => [p.id, p.score]))
+      );
       io.to(roomCode).emit("room-updated");
 
       startTimer(roomCode, ROUND_SECONDS, () => handleRoundEnd(roomCode));
@@ -340,10 +452,5 @@ io.on("connection", (socket) => {
       removePlayerSocket(connectedPlayer, socket.id, connectedRoom);
     }
   });
-});
-
-const PORT = process.env.SOCKET_PORT || 3001;
-
-httpServer.listen(PORT, () => {
-  console.log(`Socket.IO Sidecar Server running on port ${PORT}`);
-});
+  });
+}

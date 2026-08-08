@@ -200,26 +200,27 @@ export default function CanvasBoard({
   };
 
   return (
-    <div className="flex-1 bg-slate-200 flex items-center justify-center overflow-hidden relative p-4">
-      <canvas
-        ref={canvasRef}
-        width={800}
-        height={600}
-        className={`bg-white shadow-md ${isDrawer ? 'cursor-crosshair' : 'cursor-default'}`}
-        style={{ 
-          maxWidth: "100%", 
-          maxHeight: "100%", 
-          aspectRatio: "800 / 600",
-          touchAction: "none" 
-        }}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        onTouchStart={startDrawing}
-        onTouchMove={draw}
-        onTouchEnd={stopDrawing}
-      />
+    <div className="relative w-full max-w-[800px] aspect-[4/3] bg-[var(--color-drawing-surface)] sketch-border flex flex-col">
+      {/* Top Spiral Binding */}
+      <div className="top-spiral w-full absolute top-0 left-0" />
+
+      {/* Canvas */}
+      <div className="flex-grow w-full h-full relative mt-3">
+        <canvas
+          ref={canvasRef}
+          width={800}
+          height={600}
+          className={`w-full h-full ${isDrawer ? "cursor-crosshair" : "cursor-default"}`}
+          style={{ touchAction: "none" }}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
+        />
+      </div>
     </div>
   );
 }

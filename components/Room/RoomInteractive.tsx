@@ -30,8 +30,6 @@ export default function RoomInteractive({
         setRoom(data.room);
       }
     } catch (err) {
-      // Note: a dev-server crash can return an HTML page here; we log it as a
-      // regular error rather than crashing on an unparseable JSON response.
       console.error("Error fetching room:", err);
     }
   };
@@ -103,16 +101,42 @@ export default function RoomInteractive({
   }
 
   return (
-    <section className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-2xl text-center border border-gray-700">
-      <h1 className="text-3xl font-bold mb-2 text-indigo-400">Room Lobby</h1>
-      <p className="text-gray-400 mb-8">
-        Room Code:{" "}
-        <span className="font-mono text-white bg-gray-900 px-3 py-1 rounded select-all">
+    <section className="bg-[var(--color-surface-container-high)] p-8 md:p-12 sketch-border rotate-[-1deg] w-full max-w-3xl text-center relative mt-12 mx-4">
+      {/* Tape accents */}
+      <div className="tape-strip absolute w-24 h-8 -top-4 left-1/2 -translate-x-1/2 rotate-[2deg]" />
+      <div className="tape-strip absolute w-16 h-6 -bottom-3 -right-3 rotate-[-10deg]" />
+
+      <h1
+        className="text-[48px] leading-[1.2] mb-4 text-[var(--color-on-surface)]"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        Room Lobby
+      </h1>
+
+      <div
+        className="
+          inline-flex items-center gap-4 mb-12
+          bg-[var(--color-surface-container)]
+          px-4 py-2
+          rough-border
+          rotate-[1deg]
+        "
+      >
+        <span
+          className="text-[18px] text-[var(--color-on-surface-variant)]"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          Room Code:
+        </span>
+        <span
+          className="text-[24px] tracking-widest text-[var(--color-on-surface)] select-all"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
           {roomCode}
         </span>
-      </p>
+      </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
         {room.players.map((player: Player) => (
           <PlayerCard key={player.id} player={player} />
         ))}

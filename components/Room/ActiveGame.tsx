@@ -65,7 +65,7 @@ export default function ActiveGame({
       playerList={
         <div className="flex flex-col h-full overflow-y-auto">
           {room.players.map((player: Player) => (
-            <div key={player.id} className="border-b border-slate-200">
+            <div key={player.id} className="border-b-2 border-dashed border-[var(--color-outline-variant)]">
               <PlayerCard 
                 player={{...player, isDrawer: player.id === room.currentDrawerId}} 
                 layout="horizontal" 

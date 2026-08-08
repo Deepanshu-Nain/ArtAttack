@@ -23,21 +23,51 @@ export default function WordSelectionInteractive({
   };
 
   return (
-    <div className="text-center w-full max-w-2xl animate-in fade-in zoom-in duration-300">
-      <h2 className="text-3xl font-black text-slate-800 mb-2">Choose a word!</h2>
-      <p className="text-slate-500 font-medium mb-8">What are you going to draw?</p>
-      
-      <div className="flex justify-center gap-4">
-        {wordChoices?.map((word: string) => (
-          <button
-            key={word}
-            disabled={selecting}
-            onClick={() => handleSelectWord(word)}
-            className="px-8 py-4 bg-white hover:bg-indigo-50 border-2 border-indigo-100 hover:border-indigo-400 text-indigo-700 font-bold text-xl rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50"
-          >
-            {word}
-          </button>
-        ))}
+    <div className="text-center w-full max-w-2xl animate-in fade-in zoom-in duration-300 flex flex-col items-center">
+      <h2
+        className="text-[48px] leading-[1.2] text-[var(--color-on-surface)] mb-2"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        Choose a word!
+      </h2>
+      <p
+        className="text-[24px] text-[var(--color-on-surface-variant)] mb-12"
+        style={{ fontFamily: "var(--font-body)" }}
+      >
+        What are you going to draw?
+      </p>
+
+      <div className="flex justify-center gap-6 flex-wrap">
+        {wordChoices?.map((word: string, i) => {
+          // Tilt the cards slightly for a messy desk look
+          const rotation = (i % 2 === 0 ? -3 : 3) + i;
+
+          return (
+            <button
+              key={word}
+              disabled={selecting}
+              onClick={() => handleSelectWord(word)}
+              className="
+                px-8 py-10
+                bg-[var(--color-surface-container-highest)]
+                text-[var(--color-on-surface)]
+                text-[32px] leading-[1.2]
+                rough-border
+                paper-shadow
+                hover:scale-105 hover:rotate-0 hover:bg-[var(--color-primary-container)] hover:text-[var(--color-on-primary-container)]
+                transition-all duration-200
+                active:scale-95 disabled:opacity-50
+                w-48
+              "
+              style={{
+                fontFamily: "var(--font-display)",
+                transform: `rotate(${rotation}deg)`,
+              }}
+            >
+              {word}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,32 +1,222 @@
 @import "tailwindcss";
 
+/* ─── Design System: Analog Sketchbook ─── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surface & Background */
+  --color-surface: #fff9e9;
+  --color-surface-dim: #dfdac8;
+  --color-surface-bright: #fff9e9;
+  --color-surface-container: #f4eedc;
+  --color-surface-container-low: #f9f3e1;
+  --color-surface-container-high: #eee8d6;
+  --color-surface-container-highest: #e8e2d1;
+  --color-surface-variant: #e8e2d1;
+  --color-drawing-surface: #ffffff;
+
+  /* On Surface */
+  --color-on-surface: #1e1c11;
+  --color-on-surface-variant: #4b4731;
+
+  /* Primary */
+  --color-primary: #6a5f00;
+  --color-primary-container: #ffe600;
+  --color-on-primary-container: #726600;
+
+  /* Secondary */
+  --color-secondary: #ac2a5e;
+  --color-secondary-container: #fe6b9e;
+  --color-on-secondary-container: #6e0035;
+  --color-secondary-fixed-dim: #ffb1c6;
+  --color-on-secondary-fixed-variant: #8c0a46;
+
+  /* Tertiary */
+  --color-tertiary: #605e5c;
+  --color-tertiary-container: #e8e4e1;
+  --color-on-tertiary-container: #676563;
+
+  /* Error */
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* Outline & Border */
+  --color-outline: #7c775f;
+  --color-outline-variant: #cdc7aa;
+
+  /* Utility */
+  --color-pencil: #9e988a;
+  --color-paper-dark: #ebe4cd;
+  --color-tape: rgba(226, 223, 211, 0.8);
+  --color-ink-shadow: rgba(44, 43, 41, 0.15);
+
+  /* Inverse */
+  --color-inverse-surface: #333125;
+  --color-inverse-on-surface: #f7f1de;
+
+  /* Fonts */
+  --font-display: "Permanent Marker", cursive;
+  --font-body: "Kalam", cursive;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-on-surface);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Core Utility Classes ─── */
+
+/* Hand-drawn wobbly border */
+.rough-border {
+  border: 3px solid var(--color-on-surface);
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
 }
 
-body {
-  color: rgb(var(--color-foreground) );
-  padding: 1rem;
+/* Sketch-style border (pencil-colored, hard shadow) */
+.sketch-border {
+  border: 3px solid var(--color-pencil);
+  border-radius: 4px 12px 6px 14px;
+  box-shadow: 3px 4px 0px var(--color-ink-shadow);
 }
 
-@layer base {
-  body {
-    @apply bg-white text-black;
-  }
+/* Torn/ripped paper clip-path */
+.torn-paper {
+  clip-path: polygon(
+    0% 5%, 5% 0%, 95% 3%, 100% 0%,
+    97% 95%, 100% 100%, 5% 97%, 0% 100%
+  );
 }
 
+/* Fibrous paper background texture */
+.bg-fibrous {
+  background-color: var(--color-surface);
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+}
+
+/* Dotted paper background (for game pages) */
+.bg-dotted-paper {
+  background-color: var(--color-surface);
+  background-image: radial-gradient(var(--color-surface-dim) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Spiral notebook binding dots (vertical) */
+.spiral-binding {
+  background-image: radial-gradient(circle, var(--color-on-surface) 30%, transparent 32%);
+  background-size: 20px 40px;
+  background-position: left center;
+  background-repeat: repeat-y;
+}
+
+/* Horizontal spiral binding for mobile */
+.spiral-binding-horizontal {
+  background-image: radial-gradient(circle, var(--color-on-surface) 30%, transparent 32%);
+  background-size: 40px 20px;
+  background-repeat: repeat-x;
+}
+
+/* Notebook holes (perforated margin) */
+.notebook-holes {
+  background-image: radial-gradient(
+    circle at 10px 50%,
+    transparent 6px,
+    var(--color-pencil) 7px,
+    var(--color-pencil) 8px,
+    transparent 9px
+  );
+  background-size: 100% 30px;
+  background-repeat: repeat-y;
+  border-left: 1px solid var(--color-pencil);
+}
+
+/* Top spiral binding for canvas */
+.top-spiral {
+  background-image:
+    linear-gradient(90deg, transparent 0%, transparent 40%, var(--color-pencil) 40%, var(--color-pencil) 60%, transparent 60%),
+    radial-gradient(circle at 50% 50%, var(--color-surface) 40%, var(--color-pencil) 45%, var(--color-pencil) 55%, transparent 60%);
+  background-size: 30px 100%, 30px 20px;
+  background-repeat: repeat-x;
+  background-position: center top;
+  height: 24px;
+  margin-top: -12px;
+  z-index: 10;
+}
+
+/* Wavy underline for headings */
+.wobbly-line {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: var(--color-on-surface);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 8px;
+}
+
+/* Masking tape strip */
+.tape-strip {
+  background-color: var(--color-tape);
+  backdrop-filter: blur(4px);
+  box-shadow: 1px 2px 0px rgba(44, 43, 41, 0.1);
+}
+
+/* Chat bubble (ripped paper scrap) */
+.chat-bubble {
+  box-shadow: 2px 3px 0px var(--color-ink-shadow);
+  border: 1px solid var(--color-pencil);
+  border-radius: 2px 8px 3px 6px;
+}
+
+/* Sticky note (yellow, for results modal) */
+.sticky-note {
+  background-color: var(--color-primary-container);
+  box-shadow: 6px 8px 0px var(--color-ink-shadow);
+  transform: rotate(-1deg);
+}
+
+/* Cardboard button (brutalist, for results) */
+.cardboard-btn {
+  background-color: var(--color-outline-variant);
+  border: 3px solid var(--color-on-surface);
+  box-shadow: 4px 4px 0px var(--color-on-surface);
+  clip-path: polygon(2% 0%, 98% 2%, 100% 98%, 0% 100%);
+}
+
+.cardboard-btn:active {
+  transform: translateY(2px);
+  box-shadow: 2px 2px 0px var(--color-on-surface);
+}
+
+/* Wobbly border (thinner variant for results) */
+.wobbly-border {
+  border: 2px solid var(--color-on-surface);
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+
+/* Paper shadows */
+.paper-shadow {
+  box-shadow: 3px 4px 0px var(--color-ink-shadow);
+}
+
+.paper-shadow-lg {
+  box-shadow: 6px 8px 0px var(--color-ink-shadow);
+}
+
+/* Lined paper background for inputs */
+.lined-paper {
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 19L20 19' stroke='%23e8e2d1' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+}
+
+/* Blue-lined paper for chat input */
+.blue-lined-paper {
+  background-image: repeating-linear-gradient(transparent, transparent 27px, #93c5fd 28px);
+  background-attachment: local;
+}
+
+/* Hide scrollbar */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Safe area padding for mobile bottom nav */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }

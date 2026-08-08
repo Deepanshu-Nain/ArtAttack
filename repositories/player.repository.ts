@@ -65,3 +65,10 @@ export async function deletePlayer(playerId: string) {
     console.error(`Failed to delete player ${playerId}:`, err);
   }
 }
+
+export async function resetScores(playerIds: string[]) {
+  return prisma.player.updateMany({
+    where: { id: { in: playerIds } },
+    data: { score: 0 },
+  });
+}
