@@ -81,7 +81,10 @@ export async function joinRoomByCode(
   }
 
   // The room exists, so this player is simply joining it — not the host.
-  let player = await registerPlayer(data);
+  // `code` is only used for lookup; strip it so it never leaks into a
+  // prisma.player.create/update call (which would reject the unknown field).
+  const { code: _code, ...playerData } = data;
+  let player = await registerPlayer(playerData);
   player = await assignPlayerToRoom(player.id, room.id, false);
 
   // Re-fetch the room so the returned players list includes the player we just added.
