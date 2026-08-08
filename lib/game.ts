@@ -5,6 +5,10 @@ type JoinGameData = {
   playerId?: string | null;
 };
 
+type JoinByCodeData = JoinGameData & {
+  code: string;
+};
+
 async function postJoin(url: string, data: JoinGameData) {
   const response = await fetch(url, {
     method: "POST",
@@ -34,4 +38,8 @@ export async function joinPublicGame(data: JoinGameData) {
 
 export async function joinPrivateGame(data: JoinGameData) {
   return postJoin("/api/matchmaking/private", data);
+}
+
+export async function joinGameByCode(data: JoinByCodeData) {
+  return postJoin("/api/matchmaking/join", data);
 }

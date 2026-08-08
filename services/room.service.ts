@@ -19,9 +19,9 @@ export async function findAvailableRoom() {
   return null;
 }
 
-export async function createRoom() {
+export async function createRoom(isPrivate = false) {
   const code = generateRoomCode();
-  return repoCreateRoom(code);
+  return repoCreateRoom(code, isPrivate);
 }
 
 export async function getRoomInfo(code: string) {

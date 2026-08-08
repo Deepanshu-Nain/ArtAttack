@@ -72,3 +72,15 @@ export async function resetScores(playerIds: string[]) {
     data: { score: 0 },
   });
 }
+
+/**
+ * Mark every player as disconnected. Called once at server boot so player rows
+ * left behind by an older process (e.g. abrupt shutdown during localhost
+ * testing) don't make their rooms look "online" forever. Any player that
+ * actually reconnects flips back to `connected: true` via the join-room socket.
+ */
+export async function setAllPlayersDisconnected() {
+  return prisma.player.updateMany({
+    data: { connected: false },
+  });
+}

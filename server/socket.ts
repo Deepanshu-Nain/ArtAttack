@@ -5,7 +5,11 @@ import { Server } from "socket.io";
 import { setPlayerReady, addScore } from "../services/player.service";
 import { startGame, handlePlayerLeave } from "../services/room.service";
 import { getRoomByCode, updateRoom } from "../repositories/room.repository";
-import { getPlayerById, updatePlayer } from "../repositories/player.repository";
+import {
+  getPlayerById,
+  updatePlayer,
+  setAllPlayersDisconnected,
+} from "../repositories/player.repository";
 import { startNextRound } from "../services/round.service";
 
 const WORD_SELECTION_SECONDS = 15;
@@ -24,6 +28,12 @@ const DISCONNECT_GRACE_MS = 30_000;
 let io: Server;
 
 export function attachSocketServer(httpServer: HTTPServer) {
+  // Fresh boot: every player from a previous process is treated as offline
+  // until their browser actually reconnects (join-room sets connected:true).
+  setAllPlayersDisconnected().catch((err) => {
+    console.error("Failed to reset player connections at boot:", err);
+  });
+
   io = new Server(httpServer, {
     cors: {
       origin: process.env.CORS_ORIGIN || "*", // In production, set CORS_ORIGIN to your app's domain

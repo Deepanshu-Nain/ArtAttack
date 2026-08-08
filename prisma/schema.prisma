@@ -47,6 +47,8 @@ model Room {
 
   started Boolean @default(false)
 
+  isPrivate Boolean @default(false)
+
   currentRound Int @default(1)
 
   maxRounds Int @default(3)
