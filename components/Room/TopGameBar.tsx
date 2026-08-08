@@ -14,6 +14,7 @@ export default function TopGameBar({
   socket: Socket | null;
 }) {
   const [timeLeft, setTimeLeft] = useState(80);
+  const [hintWord, setHintWord] = useState<string | null>(null);
 
   useEffect(() => {
     if (!socket) return;
@@ -22,12 +23,23 @@ export default function TopGameBar({
       setTimeLeft(time);
     };
 
+    const handleHint = (data: { hintWord: string }) => {
+      setHintWord(data.hintWord);
+    };
+
     socket.on("timer-tick", handleTick);
+    socket.on("hint", handleHint);
 
     return () => {
       socket.off("timer-tick", handleTick);
+      socket.off("hint", handleHint);
     };
   }, [socket]);
+
+  // When a new round's word shows up, clear any letters revealed in the old round.
+  useEffect(() => {
+    setHintWord(null);
+  }, [room.currentWord]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -70,8 +82,8 @@ export default function TopGameBar({
               {room.currentWord}
             </span>
           ) : (
-            <span className="tracking-[0.3em]">
-              {room.currentWord?.replace(/[a-zA-Z]/g, "_ ")}
+            <span className="tracking-[0.3em] uppercase">
+              {hintWord || room.currentWord?.replace(/[a-zA-Z]/g, "_")}
             </span>
           )}
         </div>

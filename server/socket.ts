@@ -14,6 +14,10 @@ import { startNextRound } from "../services/round.service";
 
 const WORD_SELECTION_SECONDS = 15;
 const ROUND_SECONDS = 80;
+// Guessers get a couple of letters of the word revealed after time passes
+// (see startRoundTimer). The drawer never sees hints — they already know it.
+const HINT_AFTER_SECONDS = 30; // reveal the 1st letter 30s into the round
+const MAX_HINTS = 2;
 // How long the round-results screen stays up (the revealed word + scoreboard)
 // before auto-advancing to the next round. This is a fixed pause for everyone —
 // no player can skip it, so nobody gets ahead of the rest of the room.
@@ -53,6 +57,14 @@ const activeTimers = new Map<string, NodeJS.Timeout>();
 const roomTimeLeft = new Map<string, number>();
 const roomCorrectGuessers = new Map<string, Set<string>>();
 
+// --- HINT STATE ---
+// Letter indices revealed so far this round, per room. Once the round timer
+// crosses HINT_AFTER_SECONDS (and every HINT_AFTER_SECONDS after that), we
+// reveal one more letter — up to MAX_HINTS total — so guessers get a nudge
+// without the word being handed to them.
+const roomRevealedIndices = new Map<string, number[]>();
+const roomHintStep = new Map<string, number>();
+
 // --- ROUND RESULTS STATE ---
 // Base score per player captured the moment a word was chosen. We diff against
 // this at round end to show each player's per-round "+points" on the results
@@ -84,10 +96,17 @@ function cleanupRoomState(roomCode: string) {
   stopResultsTimer(roomCode);
   roomCorrectGuessers.delete(roomCode);
   roomBaseScores.delete(roomCode);
+  roomRevealedIndices.delete(roomCode);
+  roomHintStep.delete(roomCode);
   advancingRooms.delete(roomCode);
 }
 
-function startTimer(roomCode: string, duration: number, onComplete: () => void) {
+function startTimer(
+  roomCode: string,
+  duration: number,
+  onComplete: () => void,
+  onTick?: (timeLeft: number) => void
+) {
   stopTimer(roomCode);
   roomTimeLeft.set(roomCode, duration);
 
@@ -96,6 +115,10 @@ function startTimer(roomCode: string, duration: number, onComplete: () => void) 
     roomTimeLeft.set(roomCode, timeLeft);
 
     io.to(roomCode).emit("timer-tick", timeLeft);
+
+    if (onTick && timeLeft > 0) {
+      await onTick(timeLeft);
+    }
 
     if (timeLeft <= 0) {
       clearInterval(interval);
@@ -106,6 +129,59 @@ function startTimer(roomCode: string, duration: number, onComplete: () => void) 
   }, 1000);
 
   activeTimers.set(roomCode, interval);
+}
+
+// Reveal one more letter of the current word for guessers, then broadcast the
+// updated masked word as a "hint". The drawer is untouched — they draw the word.
+async function maybeRevealHint(roomCode: string, timeLeft: number) {
+  const step = roomHintStep.get(roomCode) ?? 0;
+  if (step >= MAX_HINTS) return;
+
+  // Reveal based on elapsed time: 1st hint at HINT_AFTER_SECONDS, 2nd at
+  // 2 * HINT_AFTER_SECONDS. Guards the async gap so we only fire one step.
+  const elapsed = ROUND_SECONDS - timeLeft;
+  const readyStep = Math.floor(elapsed / HINT_AFTER_SECONDS);
+  if (readyStep <= step) return;
+
+  const room = await getRoomByCode(roomCode);
+  if (!room?.currentWord) return;
+
+  const word = room.currentWord;
+  const revealed = roomRevealedIndices.get(roomCode) ?? [];
+
+  // Find letter indices not yet revealed, then pick one.
+  const candidates = word
+    .split("")
+    .map((char, i) => ({ char, i }))
+    .filter(({ char, i }) => /[a-zA-Z]/.test(char) && !revealed.includes(i));
+  if (candidates.length === 0) return;
+
+  const pick = candidates[Math.floor(Math.random() * candidates.length)].i;
+  const next = [...revealed, pick];
+  roomRevealedIndices.set(roomCode, next);
+  roomHintStep.set(roomCode, readyStep);
+
+  const hintWord = word
+    .split("")
+    .map((char, i) =>
+      /[a-zA-Z]/.test(char) && !next.includes(i) ? "_" : char
+    )
+    .join("");
+
+  io.to(roomCode).emit("hint", { hintWord, revealedCount: next.length });
+}
+
+// Round timer with hint reveal on each tick. Used instead of a bare
+// startTimer(ROUND_SECONDS) once the word is locked in.
+function startRoundTimer(roomCode: string) {
+  roomRevealedIndices.delete(roomCode);
+  roomHintStep.delete(roomCode);
+  startTimer(
+    roomCode,
+    ROUND_SECONDS,
+    () => handleRoundEnd(roomCode),
+    (timeLeft) => maybeRevealHint(roomCode, timeLeft)
+  );
 }
 
 // Word-choice phase: if the drawer doesn't pick in time, auto-pick the first word
@@ -131,7 +207,7 @@ async function startWordSelection(roomCode: string) {
       );
       io.to(roomCode).emit("room-updated");
 
-      startTimer(roomCode, ROUND_SECONDS, () => handleRoundEnd(roomCode));
+      startRoundTimer(roomCode);
     } catch (err) {
       console.error("Auto word selection error:", err);
     }
@@ -359,7 +435,7 @@ function registerConnectionHandlers() {
       );
       io.to(roomCode).emit("room-updated");
 
-      startTimer(roomCode, ROUND_SECONDS, () => handleRoundEnd(roomCode));
+      startRoundTimer(roomCode);
     } catch (err) {
       console.error("Select word error:", err);
     }
